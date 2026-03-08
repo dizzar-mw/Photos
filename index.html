@@ -3,118 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Portfolio // BOOM!</title>
+    <title>Photo Portfolio // ACTION!</title>
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Open+Sans:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --yellow: #ffde00;
-            --blue: #2fe1ff;
-            --red: #ff3e3e;
-            --black: #000;
-            --border-width: 4px;
+            --yellow: #ffde00; --blue: #2fe1ff; --red: #ff3e3e; --black: #000;
         }
 
         body {
             background-color: #f0f0f0;
             background-image: radial-gradient(var(--black) 1px, transparent 0);
-            background-size: 20px 20px; /* Halftone dot effect */
+            background-size: 20px 20px;
             font-family: 'Open Sans', sans-serif;
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px; overflow-x: hidden;
         }
 
-        header {
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        h1 {
-            font-family: 'Bangers', cursive;
-            font-size: 5rem;
-            color: var(--yellow);
-            text-shadow: 4px 4px 0 var(--black), -2px -2px 0 var(--blue), 6px 6px 0 var(--red);
-            letter-spacing: 5px;
-            transform: skew(-5deg) rotate(-2deg);
-            margin: 0;
+        header h1 {
+            text-align: center; font-family: 'Bangers', cursive; font-size: 4rem;
+            color: var(--yellow); text-shadow: 4px 4px 0 var(--black), 6px 6px 0 var(--red);
+            transform: skew(-5deg); margin-bottom: 40px;
         }
 
         #gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px; max-width: 1200px; margin: 0 auto;
         }
 
         .panel {
-            background: white;
-            border: var(--border-width) solid var(--black);
-            box-shadow: 10px 10px 0 var(--black);
-            padding: 10px;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            opacity: 0; /* Hidden initially for JS animation */
-            transform: translateY(50px);
+            background: white; border: 4px solid var(--black); box-shadow: 8px 8px 0 var(--black);
+            padding: 10px; cursor: pointer; transition: 0.3s; opacity: 0; transform: translateY(30px);
         }
 
-        .panel:nth-child(even) { transform: rotate(1deg) translateY(50px); }
-        .panel:nth-child(odd) { transform: rotate(-1deg) translateY(50px); }
+        .panel.visible { opacity: 1; transform: translateY(0) rotate(var(--rot)); }
+        .panel:hover { transform: scale(1.03) rotate(0deg) !important; z-index: 5; box-shadow: 12px 12px 0 var(--blue); }
+        .panel img { width: 100%; height: 250px; object-fit: cover; border: 2px solid var(--black); }
 
-        .panel.visible {
-            opacity: 1;
-            transform: translateY(0) rotate(var(--rot, 0deg));
+        /* --- THE COMIC LIGHTBOX --- */
+        #lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
 
-        .panel:hover {
-            transform: scale(1.05) rotate(0deg) !important;
-            z-index: 10;
-            box-shadow: 15px 15px 0 var(--blue);
+        #viewer-container {
+            position: relative; width: 90%; max-width: 1000px; text-align: center;
         }
 
-        .panel img {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-            border: 2px solid var(--black);
-            display: block;
+        #lightbox-img {
+            max-width: 100%; max-height: 75vh; border: 8px solid white;
+            outline: 4px solid var(--black); box-shadow: 15px 15px 0 var(--yellow);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .caption {
-            font-family: 'Bangers', cursive;
-            background: var(--yellow);
-            border-top: var(--border-width) solid var(--black);
-            padding: 5px 10px;
-            margin-top: 10px;
-            font-size: 1.2rem;
-            text-transform: uppercase;
+        /* --- CONTROLS --- */
+        .controls {
+            margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;
         }
 
-        .loading-text {
-            font-family: 'Bangers';
-            font-size: 2rem;
-            text-align: center;
-            width: 100%;
+        .btn {
+            font-family: 'Bangers', cursive; font-size: 1.5rem; padding: 10px 25px;
+            border: 3px solid var(--black); cursor: pointer; text-transform: uppercase;
+            box-shadow: 4px 4px 0 var(--black); transition: 0.1s;
+        }
+
+        .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--black); }
+        .btn-prev { background: var(--blue); }
+        .btn-next { background: var(--red); color: white; }
+        .btn-mode { background: var(--yellow); }
+        .btn-full { background: white; }
+        .btn-close { position: absolute; top: -50px; right: 0; background: #fff; color: #000; }
+
+        .loading-text { font-family: 'Bangers'; font-size: 2rem; text-align: center; width: 100%; }
+
+        /* Animation for auto-play */
+        .slide-pop { animation: popIn 0.4s ease-out; }
+        @keyframes popIn {
+            0% { transform: scale(0.8) rotate(-5deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>GALLERY REVEAL!</h1>
-    </header>
+    <header><h1>PHOTO REEL: VOLUME 1</h1></header>
 
     <div id="gallery">
-        <p class="loading-text">Scouting the multiverse for photos...</p>
+        <p class="loading-text">Summoning the visuals...</p>
+    </div>
+
+    <div id="lightbox">
+        <div id="viewer-container">
+            <button class="btn btn-close" onclick="closeLightbox()">X - CLOSE</button>
+            <img src="" id="lightbox-img">
+            
+            <div class="controls">
+                <button class="btn btn-prev" onclick="changePhoto(-1)">PREV</button>
+                <button class="btn btn-mode" id="playBtn" onclick="toggleAutoPlay()">AUTO PLAY</button>
+                <button class="btn btn-full" onclick="viewOriginal()">FULL SIZE</button>
+                <button class="btn btn-next" onclick="changePhoto(1)">NEXT</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // CONFIGURATION: Replace these with your GitHub details
-        const USERNAME = 'dizzar-mw'; 
-        const REPO = 'Photos'; 
+        const USERNAME = 'dizzar-mw';
+        const REPO = 'Photos';
         const FOLDER_PATH = 'photos';
+
+        let allPhotos = [];
+        let currentIndex = 0;
+        let autoPlayInterval = null;
 
         async function fetchPhotos() {
             const gallery = document.getElementById('gallery');
@@ -123,43 +120,77 @@
             try {
                 const response = await fetch(apiUrl);
                 const files = await response.json();
-
-                // Clear loading text
                 gallery.innerHTML = '';
 
-                // Filter for images only
-                const images = files.filter(file => 
-                    file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-                );
+                allPhotos = files.filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i));
 
-                images.forEach((file, index) => {
+                allPhotos.forEach((file, index) => {
                     const panel = document.createElement('div');
                     panel.className = 'panel';
-                    
-                    // Assign random rotation for the comic look
                     const rot = (Math.random() * 4 - 2).toFixed(2);
                     panel.style.setProperty('--rot', `${rot}deg`);
 
                     panel.innerHTML = `
                         <img src="${file.download_url}" alt="${file.name}">
-                        <div class="caption">Shot #${index + 1}: ${file.name.split('.')[0]}</div>
+                        <div style="font-family:'Bangers'; margin-top:5px;">ITEM #${index + 1}</div>
                     `;
 
+                    panel.onclick = () => openLightbox(index);
                     gallery.appendChild(panel);
-
-                    // Animate in with a slight stagger
-                    setTimeout(() => {
-                        panel.classList.add('visible');
-                    }, index * 100);
+                    setTimeout(() => panel.classList.add('visible'), index * 100);
                 });
-
-            } catch (error) {
-                console.error("Error fetching images:", error);
-                gallery.innerHTML = `<p class="loading-text">KAPOW! Error loading images. Check folder name.</p>`;
+            } catch (e) {
+                gallery.innerHTML = `<p class="loading-text">KAPOW! Error. Check Repo Name.</p>`;
             }
         }
 
-        // Initialize
+        function openLightbox(index) {
+            currentIndex = index;
+            updateLightbox();
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+            stopAutoPlay();
+        }
+
+        function updateLightbox() {
+            const img = document.getElementById('lightbox-img');
+            img.classList.remove('slide-pop');
+            void img.offsetWidth; // Trigger reflow for animation
+            img.src = allPhotos[currentIndex].download_url;
+            img.classList.add('slide-pop');
+        }
+
+        function changePhoto(step) {
+            currentIndex = (currentIndex + step + allPhotos.length) % allPhotos.length;
+            updateLightbox();
+        }
+
+        function toggleAutoPlay() {
+            const btn = document.getElementById('playBtn');
+            if (autoPlayInterval) {
+                stopAutoPlay();
+            } else {
+                btn.innerText = "STOP AUTO";
+                btn.style.background = "#ff3e3e";
+                autoPlayInterval = setInterval(() => changePhoto(1), 3000); // 3 seconds per slide
+            }
+        }
+
+        function stopAutoPlay() {
+            const btn = document.getElementById('playBtn');
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+            btn.innerText = "AUTO PLAY";
+            btn.style.background = "#ffde00";
+        }
+
+        function viewOriginal() {
+            window.open(allPhotos[currentIndex].download_url, '_blank');
+        }
+
         fetchPhotos();
     </script>
 </body>
